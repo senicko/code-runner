@@ -2,18 +2,30 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 )
 
-// Config represents an object received on stdin containing configuration.
-type Config struct {
-	Files []struct {
-		Name    string `json:"name"`
-		Content string `json:"content"`
-	}
+// file represents a single file.
+type file struct {
+	Name string
+	Body string
+}
+
+// Request represents incoming request config.
+type Request struct {
+	Language string `json:"language"`
+	Files    []file `json:"files"`
+}
+
+type Result struct {
+	Stdout   string `json:"stdout"`
+	Stderr   string `json:"stderr"`
+	ExitCode int    `json:"exitCode"`
 }
 
 func main() {
@@ -26,17 +38,22 @@ func main() {
 		panic(err)
 	}
 
-	out, err := run()
+	result, err := run()
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Print(string(out))
+	output, err := json.Marshal(result)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Print(string(output))
 }
 
 // waitForConfig waits for a config to be passed on stdin.
 // Returns unmarshalled config and any error encountered.
-func waitForConfig() (*Config, error) {
+func waitForConfig() (*Request, error) {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	scanner.Scan()
@@ -45,24 +62,24 @@ func waitForConfig() (*Config, error) {
 	}
 	b := scanner.Bytes()
 
-	var config Config
-	if err := json.Unmarshal(b, &config); err != nil {
+	var request Request
+	if err := json.Unmarshal(b, &request); err != nil {
 		return nil, err
 	}
 
-	return &config, nil
+	return &request, nil
 }
 
-// createFiles creates all input files specified in config.
+// createFiles creates all input files specified in request.
 // Returns any error encountered.
-func createFiles(config *Config) error {
-	for _, f := range config.Files {
-		file, err := os.Create(f.Name)
+func createFiles(request *Request) error {
+	for _, f := range request.Files {
+		file, err := os.Create("./files/" + f.Name)
 		if err != nil {
 			return err
 		}
 
-		if _, err := file.Write([]byte(f.Content)); err != nil {
+		if _, err := file.Write([]byte(f.Body)); err != nil {
 			return err
 		}
 	}
@@ -72,10 +89,21 @@ func createFiles(config *Config) error {
 
 // execute runs the program.
 // Returns the result and any error encountered.
-func run() ([]byte, error) {
-	out, err := exec.Command("go", "run", "./out/main.go").Output()
-	if err != nil {
+func run() (*Result, error) {
+	var stdout, stderr bytes.Buffer
+
+	cmd := exec.Command("go", "run", "./files/main.go")
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	var e *exec.ExitError
+	if err := cmd.Run(); err != nil && !errors.As(err, &e) {
 		return nil, err
 	}
-	return out, nil
+
+	return &Result{
+		Stdout:   stdout.String(),
+		Stderr:   stderr.String(),
+		ExitCode: cmd.ProcessState.ExitCode(),
+	}, nil
 }
