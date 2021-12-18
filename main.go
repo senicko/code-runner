@@ -8,25 +8,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+
+	"github.com/senicko/bee/pkg/types"
 )
-
-// file represents a single file.
-type file struct {
-	Name string
-	Body string
-}
-
-// Request represents incoming request config.
-type Request struct {
-	Language string `json:"language"`
-	Files    []file `json:"files"`
-}
-
-type Result struct {
-	Stdout   string `json:"stdout"`
-	Stderr   string `json:"stderr"`
-	ExitCode int    `json:"exitCode"`
-}
 
 func main() {
 	config, err := waitForConfig()
@@ -53,7 +37,7 @@ func main() {
 
 // waitForConfig waits for a config to be passed on stdin.
 // Returns unmarshalled config and any error encountered.
-func waitForConfig() (*Request, error) {
+func waitForConfig() (*types.Request, error) {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	scanner.Scan()
@@ -62,7 +46,7 @@ func waitForConfig() (*Request, error) {
 	}
 	b := scanner.Bytes()
 
-	var request Request
+	var request types.Request
 	if err := json.Unmarshal(b, &request); err != nil {
 		return nil, err
 	}
@@ -72,7 +56,7 @@ func waitForConfig() (*Request, error) {
 
 // createFiles creates all input files specified in request.
 // Returns any error encountered.
-func createFiles(request *Request) error {
+func createFiles(request *types.Request) error {
 	for _, f := range request.Files {
 		file, err := os.Create("./files/" + f.Name)
 		if err != nil {
@@ -89,7 +73,7 @@ func createFiles(request *Request) error {
 
 // execute runs the program.
 // Returns the result and any error encountered.
-func run() (*Result, error) {
+func run() (*types.Result, error) {
 	var stdout, stderr bytes.Buffer
 
 	cmd := exec.Command("go", "run", "./files/main.go")
@@ -101,7 +85,7 @@ func run() (*Result, error) {
 		return nil, err
 	}
 
-	return &Result{
+	return &types.Result{
 		Stdout:   stdout.String(),
 		Stderr:   stderr.String(),
 		ExitCode: cmd.ProcessState.ExitCode(),
