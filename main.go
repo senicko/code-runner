@@ -71,7 +71,7 @@ func createFiles(request *types.Request) error {
 	return nil
 }
 
-// execute runs the program.
+// run runs the program.
 // Returns the result and any error encountered.
 func run() (*types.Result, error) {
 	var stdout, stderr bytes.Buffer
