@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/senicko/bee/pkg/runner"
 	"github.com/senicko/bee/pkg/types"
 )
 
@@ -22,7 +23,8 @@ func main() {
 		panic(err)
 	}
 
-	result, err := run()
+	runnerCofig := runner.NewConfig(config.Language, "./files/main.go")
+	result, err := run(runnerCofig)
 	if err != nil {
 		panic(err)
 	}
@@ -71,23 +73,22 @@ func createFiles(request *types.Request) error {
 	return nil
 }
 
-// run runs the program.
+// run runs the submitted code.
 // Returns the result and any error encountered.
-func run() (*types.Result, error) {
+func run(config *runner.Config) (*types.Result, error) {
 	var stdout, stderr bytes.Buffer
 
-	cmd := exec.Command("go", "run", "./files/main.go")
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	config.Cmd.Stdout = &stdout
+	config.Cmd.Stderr = &stderr
 
 	var e *exec.ExitError
-	if err := cmd.Run(); err != nil && !errors.As(err, &e) {
+	if err := config.Cmd.Run(); err != nil && !errors.As(err, &e) {
 		return nil, err
 	}
 
 	return &types.Result{
 		Stdout:   stdout.String(),
 		Stderr:   stderr.String(),
-		ExitCode: cmd.ProcessState.ExitCode(),
+		ExitCode: config.Cmd.ProcessState.ExitCode(),
 	}, nil
 }
