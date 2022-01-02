@@ -24,6 +24,7 @@ _For now `main.go` is an entry file._
 
 ```json
 {
+  "language": "golang",
   "files": [
     {
       "name": "main.go",

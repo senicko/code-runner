@@ -20,8 +20,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error: %s", err.Error())
 	}
 
-	// TODO: remove string cast
-	fmt.Print(string(output))
+	fmt.Print(output)
 }
 
 func start() (string, error) {
