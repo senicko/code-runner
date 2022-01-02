@@ -14,27 +14,38 @@ import (
 )
 
 func main() {
+	output, err := start()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s", err.Error())
+	}
+
+	// TODO: remove string cast
+	fmt.Print(string(output))
+}
+
+func start() (string, error) {
 	config, err := waitForConfig()
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	if err := createFiles(config); err != nil {
-		panic(err)
+		return "", err
 	}
 
 	runnerCofig := runner.NewConfig(config.Language, "./files/main.go")
 	result, err := run(runnerCofig)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	output, err := json.Marshal(result)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
-	fmt.Print(string(output))
+	return string(output), nil
 }
 
 // waitForConfig waits for a config to be passed on stdin.

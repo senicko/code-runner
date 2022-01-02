@@ -1,13 +1,12 @@
 # Bee
 
-Bee is a go program running inside containers created by [Bee Hive](https://github.com/senicko/bee-hive). It's task is to
-read the config, create source files, execute the submitted code and return the output.
+Bee is a go program that takes code as an input and returs the output.
 
 _Currently it supports only golang code execution._
 
-## How does it work
+## Examples
 
-For example consider simple `Hello, World!` app.
+Consider simple `Hello, World!` app.
 
 ```go
 package main
@@ -19,7 +18,7 @@ func main() {
 }
 ```
 
-To execute it inside a container that is running a bee you need to write a following request to it's stdin.
+To execute it you need to write a following request to the `stdin`.
 
 _For now `main.go` is an entry file._
 
@@ -34,7 +33,7 @@ _For now `main.go` is an entry file._
 }
 ```
 
-Bee should write following response to it's stdout.
+You should get following response written to `stdout`.
 
 ```json
 {
@@ -42,4 +41,34 @@ Bee should write following response to it's stdout.
   "stderr": "",
   "exitCode": 0
 }
+```
+
+If error is caused by user's submitted code it is returned as a regular response written to `stdout`.
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+  fmt.Println"Hello, World!")
+  //         ^
+  // missing parenthese
+}
+```
+
+```json
+{
+  "stdout": "",
+  "stderr": "# command-line-arguments\nfiles/main.go:4:16: syntax error: unexpected jest, expecting comma or )\nfiles/main.go:4:27: newline in string\n",
+  "exitCode": 2
+}
+```
+
+Errors that occure because of invalid request or internal problems are written to `stderr`.
+
+_Example with incorrect request_
+
+```
+Error: invalid character 'a' looking for beginning of value
 ```
