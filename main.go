@@ -85,7 +85,7 @@ func createFiles(request *types.Request) error {
 
 // run runs the submitted code.
 // Returns the result and any error encountered.
-func run(config *runner.Config) (*types.Result, error) {
+func run(config *runner.Config) (*types.Response, error) {
 	var stdout, stderr bytes.Buffer
 
 	config.Cmd.Stdout = &stdout
@@ -96,7 +96,7 @@ func run(config *runner.Config) (*types.Result, error) {
 		return nil, err
 	}
 
-	return &types.Result{
+	return &types.Response{
 		Stdout:   stdout.String(),
 		Stderr:   stderr.String(),
 		ExitCode: config.Cmd.ProcessState.ExitCode(),
