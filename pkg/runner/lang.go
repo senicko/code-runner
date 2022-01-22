@@ -10,6 +10,7 @@ func NewConfig(lang, entry string) *Config {
 	config := &Config{}
 
 	switch lang {
+	case "go":
 	case "golang":
 		config.Cmd = exec.Command("go", "run", entry)
 	}
