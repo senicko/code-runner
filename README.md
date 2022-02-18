@@ -1,4 +1,4 @@
-# Bee
+# Code runner
 
 Bee is a go program that takes code as an input and returs the output.
 
