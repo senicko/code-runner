@@ -2,8 +2,6 @@
 
 Code runner is a go program that takes code as an input and returs the output.
 
-_Currently it supports only golang code execution._
-
 ## Examples
 
 Consider simple `Hello, World!` app.
