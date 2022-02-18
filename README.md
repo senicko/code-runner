@@ -75,5 +75,5 @@ Error: invalid character 'a' looking for beginning of value
 Building images
 
 ```
-docker build -t bee/<language> -f ./images/<image> .
+docker build -t code-runner/<language> -f ./images/<image> .
 ```
