@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 
-	"github.com/senicko/bee/pkg/runner"
-	"github.com/senicko/bee/pkg/types"
+	"github.com/senicko/code-runner/pkg/runner"
+	"github.com/senicko/code-runner/pkg/types"
 )
 
 func main() {
@@ -90,7 +91,8 @@ func build(chain []*exec.Cmd, stderr *bytes.Buffer) (*types.Response, error) {
 	for _, cmd := range chain {
 		cmd.Stderr = stderr
 
-		if err := cmd.Run(); err != nil {
+		var e *exec.ExitError
+		if err := cmd.Run(); err != nil && !errors.As(err, &e) {
 			return nil, err
 		}
 
