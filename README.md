@@ -73,3 +73,9 @@ _Example with incorrect request_
 ```
 Error: invalid character 'a' looking for beginning of value
 ```
+
+Building images
+
+```
+docker build -t bee/<language> -f ./images/<image> .
+```

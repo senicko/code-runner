@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -14,41 +13,45 @@ import (
 )
 
 func main() {
-	output, err := start()
+	result, err := start()
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s", err.Error())
+	} else {
+		// TODO: handle the error.
+		output, _ := json.Marshal(result)
+		fmt.Print(string(output))
 	}
-
-	fmt.Print(output)
 }
 
-func start() (string, error) {
+// Starts the run process.
+func start() (*types.Response, error) {
 	config, err := waitForConfig()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if err := createFiles(config); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	runnerCofig := runner.NewConfig(config.Language, "./files/main.go")
-	result, err := run(runnerCofig)
+	runnerConfig := runner.NewConfig(config.Language)
+
+	var stdout, stderr bytes.Buffer
+
+	// build
+	buildResult, err := build(runnerConfig.BuildChain, &stderr)
 	if err != nil {
-		return "", err
+		return nil, err
+	}
+	if buildResult != nil {
+		return buildResult, nil
 	}
 
-	output, err := json.Marshal(result)
-	if err != nil {
-		return "", err
-	}
-
-	return string(output), nil
+	return run(runnerConfig, &stdout, &stderr), nil
 }
 
-// waitForConfig waits for a config to be passed on stdin.
-// Returns unmarshalled config and any error encountered.
+// Waits for a config to be passed on stdin.
 func waitForConfig() (*types.Request, error) {
 	scanner := bufio.NewScanner(os.Stdin)
 
@@ -66,8 +69,7 @@ func waitForConfig() (*types.Request, error) {
 	return &request, nil
 }
 
-// createFiles creates all input files specified in request.
-// Returns any error encountered.
+// Creates all input files specified in request.
 func createFiles(request *types.Request) error {
 	for _, f := range request.Files {
 		file, err := os.Create("./files/" + f.Name)
@@ -83,22 +85,38 @@ func createFiles(request *types.Request) error {
 	return nil
 }
 
-// run runs the submitted code.
-// Returns the result and any error encountered.
-func run(config *runner.Config) (*types.Response, error) {
-	var stdout, stderr bytes.Buffer
+// build the app.
+func build(chain []*exec.Cmd, stderr *bytes.Buffer) (*types.Response, error) {
+	for _, cmd := range chain {
+		cmd.Stderr = stderr
 
-	config.Cmd.Stdout = &stdout
-	config.Cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil {
+			return nil, err
+		}
 
-	var e *exec.ExitError
-	if err := config.Cmd.Run(); err != nil && !errors.As(err, &e) {
-		return nil, err
+		if exitCode := cmd.ProcessState.ExitCode(); stderr.Len() != 0 && exitCode > 0 {
+			return &types.Response{
+				Stderr:   stderr.String(),
+				ExitCode: exitCode,
+			}, nil
+		}
+	}
+
+	return nil, nil
+}
+
+// run the submitted code.
+func run(config *runner.Config, stdout, stderr *bytes.Buffer) *types.Response {
+	config.Exec.Stdout = stdout
+	config.Exec.Stderr = stderr
+
+	if err := config.Exec.Run(); err != nil {
+		return &types.Response{ExecError: err.Error(), ExitCode: config.Exec.ProcessState.ExitCode()}
 	}
 
 	return &types.Response{
 		Stdout:   stdout.String(),
 		Stderr:   stderr.String(),
-		ExitCode: config.Cmd.ProcessState.ExitCode(),
-	}, nil
+		ExitCode: config.Exec.ProcessState.ExitCode(),
+	}
 }

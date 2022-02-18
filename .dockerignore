@@ -1,3 +1,6 @@
-.idea
 README.md
-Dockerfile
+.gitignore
+images
+files
+bin
+dist
