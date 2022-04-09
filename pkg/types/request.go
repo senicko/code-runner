@@ -5,7 +5,12 @@ type File struct {
 	Body string `json:"body"`
 }
 
+type Config struct {
+  Language string `json:"language"`
+}
+
 type Request struct {
+  Config Config `json:"config"`
 	Language string `json:"language"`
 	Stdin    string `json:"stdin"`
 	Files    []File `json:"files"`

@@ -18,7 +18,12 @@ func main() {
 	result, err := start()
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s", err.Error())
+		response := map[string]string{
+			"message": err.Error(),
+		}
+
+		jsonResponse, _ := json.Marshal(response)
+		fmt.Fprintln(os.Stderr, string(jsonResponse))
 	} else {
 		// TODO: handle the error.
 		output, _ := json.Marshal(result)
@@ -28,33 +33,34 @@ func main() {
 
 // Starts the run process.
 func start() (*types.Response, error) {
-	config, err := waitForConfig()
+	request, err := waitForRequest()
 	if err != nil {
 		return nil, err
 	}
 
-	if err := createFiles(config); err != nil {
+	if err := createFiles(request); err != nil {
 		return nil, err
 	}
 
-	runnerConfig := runner.NewConfig(config.Language)
+	runnerConfig := runner.NewConfig(request.Config.Language)
 
 	var stdout, stderr bytes.Buffer
 
-	// build
-	buildResult, err := build(runnerConfig.BuildChain, &stderr)
+	buildError, err := build(runnerConfig.BuildChain, &stderr)
+
 	if err != nil {
 		return nil, err
 	}
-	if buildResult != nil {
-		return buildResult, nil
+
+	if buildError != nil {
+		return buildError, nil
 	}
- 
-	return run(runnerConfig, &stdout, &stderr, config.Stdin), nil
+
+	return run(runnerConfig, &stdout, &stderr, request.Stdin), nil
 }
 
-// Waits for a config to be passed on stdin.
-func waitForConfig() (*types.Request, error) {
+// Waits for a request to be passed on stdin.
+func waitForRequest() (*types.Request, error) {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	scanner.Scan()
@@ -112,10 +118,10 @@ func build(chain []*exec.Cmd, stderr *bytes.Buffer) (*types.Response, error) {
 func run(config *runner.Config, stdout, stderr *bytes.Buffer, stdin string) *types.Response {
 	config.Exec.Stdout = stdout
 	config.Exec.Stderr = stderr
-  config.Exec.Stdin = strings.NewReader(stdin)
- 
+	config.Exec.Stdin = strings.NewReader(stdin)
+
 	if err := config.Exec.Run(); err != nil {
-		return &types.Response{ExecError: err.Error(), ExitCode: config.Exec.ProcessState.ExitCode()}
+    return &types.Response{Stderr: stderr.String(), ExecError: err.Error(), ExitCode: config.Exec.ProcessState.ExitCode()}
 	}
 
 	return &types.Response{

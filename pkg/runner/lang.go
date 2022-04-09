@@ -13,7 +13,7 @@ func NewConfig(lang string) *Config {
 	switch lang {
 	case "golang", "go":
 		config.BuildChain = []*exec.Cmd{
-			exec.Command("go", "build", "-o", "./bin/main", "./files/main.go"),
+      exec.Command("go", "build", "-o", "./bin/main", "./files/main.go"),
 		}
 		config.Exec = exec.Command("./bin/main")
 	case "cpp", "c++":
