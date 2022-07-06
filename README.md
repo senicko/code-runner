@@ -41,14 +41,12 @@ You should get following response written to `stdout`.
 }
 ```
 
-You can also write something to stdin providing `stdin` in the config.
+You can write something to stdin with `stdin` field in the config.
 
 ```json
 {
   "stdin": "blip blip blop blop",
-  "files": [
-    // ...
-  ]
+  "files": ...
 }
 ```
 
