@@ -1,0 +1,4 @@
+{
+  "buildChain": ["go build -o ./bin/main ./files/main.go"],
+  "exec": "./bin/main"
+}

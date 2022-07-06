@@ -10,8 +10,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/senicko/code-runner/pkg/runner"
-	"github.com/senicko/code-runner/pkg/types"
+	"github.com/senicko/code-runner/runner/pkg/config"
+	"github.com/senicko/code-runner/runner/pkg/types"
 )
 
 func main() {
@@ -25,7 +25,6 @@ func main() {
 		jsonResponse, _ := json.Marshal(response)
 		fmt.Fprintln(os.Stderr, string(jsonResponse))
 	} else {
-		// TODO: handle the error.
 		output, _ := json.Marshal(result)
 		fmt.Print(string(output))
 	}
@@ -42,7 +41,10 @@ func start() (*types.Response, error) {
 		return nil, err
 	}
 
-	runnerConfig := runner.NewConfig(request.Config.Language)
+	runnerConfig, err := config.LoadConfig()
+	if err != nil {
+		return nil, err
+	}
 
 	var stdout, stderr bytes.Buffer
 
@@ -79,6 +81,10 @@ func waitForRequest() (*types.Request, error) {
 
 // Creates all input files specified in request.
 func createFiles(request *types.Request) error {
+	if err := os.MkdirAll("./files", os.ModePerm); err != nil {
+		return err
+	}
+
 	for _, f := range request.Files {
 		file, err := os.Create("./files/" + f.Name)
 		if err != nil {
@@ -115,13 +121,13 @@ func build(chain []*exec.Cmd, stderr *bytes.Buffer) (*types.Response, error) {
 }
 
 // run the submitted code.
-func run(config *runner.Config, stdout, stderr *bytes.Buffer, stdin string) *types.Response {
+func run(config *config.Config, stdout, stderr *bytes.Buffer, stdin string) *types.Response {
 	config.Exec.Stdout = stdout
 	config.Exec.Stderr = stderr
 	config.Exec.Stdin = strings.NewReader(stdin)
 
 	if err := config.Exec.Run(); err != nil {
-    return &types.Response{Stderr: stderr.String(), ExecError: err.Error(), ExitCode: config.Exec.ProcessState.ExitCode()}
+		return &types.Response{Stderr: stderr.String(), ExecError: err.Error(), ExitCode: config.Exec.ProcessState.ExitCode()}
 	}
 
 	return &types.Response{

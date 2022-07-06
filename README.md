@@ -1,6 +1,6 @@
 # Code runner
 
-Code runner is a go program that takes code as an input and returs the output.
+Code runner is a go program that takes code as an input and returs the generated output.
 
 ## Examples
 
@@ -22,7 +22,6 @@ _For now `main.go` is an entry file._
 
 ```json
 {
-  "language": "golang",
   "files": [
     {
       "name": "main.go",
@@ -39,6 +38,17 @@ You should get following response written to `stdout`.
   "stdout": "Hello, World!\n",
   "stderr": "",
   "exitCode": 0
+}
+```
+
+You can also write something to stdin providing `stdin` in the config.
+
+```json
+{
+  "stdin": "blip blip blop blop",
+  "files": [
+    // ...
+  ]
 }
 ```
 
@@ -75,5 +85,5 @@ Error: invalid character 'a' looking for beginning of value
 Building images
 
 ```
-docker build -t code-runner/<language> -f ./images/<image> .
+docker build -t code-runner/<language> -f ./dockerfiles/<language>/Dockerfile .
 ```
