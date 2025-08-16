@@ -16,7 +16,7 @@ func main() {
 }
 ```
 
-To execute it you need to write a following request to the `stdin`.
+To execute it you need to write the following request to the `stdin`.
 
 _For now `main.go` is an entry file._
 
@@ -31,7 +31,7 @@ _For now `main.go` is an entry file._
 }
 ```
 
-You should get following response written to `stdout`.
+You should get the following response written to `stdout`.
 
 ```json
 {
@@ -50,7 +50,7 @@ You can write something to stdin with `stdin` field in the config.
 }
 ```
 
-If error is caused by user's submitted code it is returned as a regular response written to `stdout`.
+If an error is caused by the user's code, it is returned as a regular response written to `stdout`.
 
 ```go
 package main
@@ -72,7 +72,7 @@ func main() {
 }
 ```
 
-Errors that occure because of invalid request or internal problems are written to `stderr`.
+Errors that occured because of invalid request or internal problems are written to `stderr`.
 
 _Example with incorrect request_
 
